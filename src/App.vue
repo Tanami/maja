@@ -1,28 +1,67 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  
+  <b-container fluid>
+    <b-row>
+      <h4>Maja's Topics</h4>
+    </b-row>
+    <b-row>
+      <b-col id="editor" class="m-2 border border-primary" contenteditable="true" >
+        This is the water.
+      </b-col>
+      <b-col class="m-2 border border-success">
+        And this is the well.
+      </b-col>
+    </b-row>
+  </b-container>
+
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+/* eslint-disable */
+
+/*
+  so it looks like contenteditable will treat innerHTML as we expect
+  so we can use class-scoped links as boundaries for the text searching?
+*/
 
 export default {
   name: 'app',
-  components: {
-    HelloWorld
+  data: function() {
+    return {
+      pageContent: ''
+    }
+  },
+  mounted: function() {
+    document.querySelector('#editor').focus()
+  },
+  methods: {
+    createLinks () {
+      var thing = document.getElementById('page')
+      var filter = document.getElementById('filter')
+
+      console.log(thing.childNodes)
+      for (let node of thing.childNodes)
+      {
+        console.log(node.constructor.name)
+        console.log(node)
+      }
+
+      filter.innerHTML = thing.innerHTML
+    }
   }
 }
+
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+#page, #filter {
+  display: block;
+  width: 640px;
+  height: 240px;
+  border: 1px solid red;
+  box-sizing: border-box;
 }
+
 </style>

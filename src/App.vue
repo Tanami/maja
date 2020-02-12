@@ -61,7 +61,6 @@ export default {
   },
   mounted: function() {
     // document.querySelector('#editor').focus()
-    // this.createLinks()
     this.highlight()
   },
   methods: {
@@ -69,93 +68,57 @@ export default {
       this.highlight()
     },
 
-    createLink (word) {
-      return '<a href="#'+word+'">'+word+'</a>';
-    },
-
     highlight() {
-      let content = document.querySelector('#editor').value
-      let output = document.querySelector('#maze')
+      const content = document.querySelector('#editor').value
+      const output = document.querySelector('#maze')
 
       output.innerHTML = ''
 
-      if (content == '') {
+      if (content == '')
         return
-      }
-      var t0 = performance.now()
 
-      let 
-        function getIndicesOf(searchStr, str, caseSensitive) {
-          var searchStrLen = searchStr.length
-          if (searchStrLen == 0) {
-              return []
-          }
-          var startIndex = 0, index, indices = []
-          if (!caseSensitive) {
-              str = str.toLowerCase()
-              searchStr = searchStr.toLowerCase()
-          }
-          while ((index = str.indexOf(searchStr, startIndex)) > -1) {
-              /*
-                search conditions:
-                 - start is a CR/LF/Space/Start
-                 - end is a CR/LF/Space/EOF
-              */
-              let left  = str.charCodeAt(index-1)
-              let right = str.charCodeAt(index+searchStr.length)
+      let  t0 = performance.now()
+      let offsets = []
 
-              if (
-                   (index === 0 && (right === 32 || right === 10 || right === 13 || index+searchStr.length === str.length))
-                || ((left === 10 || left === 13 || left === 32) && (right === 32 || right === 10 || right === 13))
-                || ((left === 10 || left === 13 || left === 32) && index+searchStr.length === str.length)
-                )
-              {
-                indices.push(index)
-              }
-              startIndex = index + searchStrLen
-          }
-          return indices
-      }
-
-      var offsets = []
       for (let word of this.db) {
-        // let calc = getIndicesOf(word, content, false)
-        // if (calc.length > 0)
-        // {
-        //   for (let offset of calc)
-        //   {
-        //     offsets.push([offset, word])
-        //   }
-        // }
-      }
-      
-      console.log(JSON.stringify(offsets))
+        let startIndex = 0, index
+        const len = word.length
+        const search = word.toLowerCase()
+        const str = content.toLowerCase()
 
-      function createLink(data, pair, scanned) {
-        let a = document.createElement("a")
-        var linkText = document.createTextNode(data);
-        a.appendChild(linkText)
-        a.href = '#/' + scanned
-        output.appendChild(a)
+        while ((index = str.indexOf(search, startIndex)) > -1) {
+          let left  = str.charCodeAt(index-1)
+          let right = str.charCodeAt(index+search.length)
+
+          // this might break in very surprising ways...
+          if   ((index === 0 || left < 33) && (right < 33 || index+search.length === str.length))
+            offsets.push([index, search])
+
+          startIndex = index + len
+        }
       }
 
-      offsets = offsets.sort((a, b) => ((parseInt(a[0]) > parseInt(b[0])) ? 1 : -1))
       if (offsets.length === 0) {
         output.innerHTML = content
         return
       }
 
-      let first_chunk = content.substring(0, offsets[0][0])
-      output.appendChild(document.createTextNode(first_chunk))
+      // console.log(JSON.stringify(offsets))
 
-      for (let pair in offsets) {
-        let word_start  = offsets[pair][0]
-        let word_length = offsets[pair][0] + offsets[pair][1].length
-        let next_pair   = offsets[parseInt(pair) + 1] ? offsets[parseInt(pair) + 1][0] : -1
+      offsets = offsets.sort((a, b) => ((parseInt(a[0]) > parseInt(b[0])) ? 1 : -1))
+      output.appendChild(document.createTextNode(content.substring(0, offsets[0][0])))
+
+      let bound = offsets.length
+      for (let pair = 0; pair < bound; pair++) {
+        const word_start  = offsets[pair][0]
+        const word_length = offsets[pair][0] + offsets[pair][1].length
+        const next_pair   = offsets[parseInt(pair) + 1] ? offsets[parseInt(pair) + 1][0] : -1
         let rem
 
-        let data = content.substring(word_start, word_length)
-        createLink(data, pair, offsets[pair][1])
+        const a = document.createElement("a")
+        a.appendChild(document.createTextNode(content.substring(word_start, word_length)))
+        a.href = '#/' + offsets[pair][1]
+        output.appendChild(a)
 
         if (next_pair !== -1) {
           rem = content.substring(word_length, next_pair)
@@ -167,7 +130,7 @@ export default {
         output.appendChild(document.createTextNode(rem))
       }
 
-      var t1 = performance.now()
+      let t1 = performance.now()
       console.log("took " + (t1 - t0) + " milliseconds.")
     },
   },

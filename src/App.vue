@@ -66,22 +66,7 @@ export default {
   },
   methods: {
     createLinks () {
-
-      let test_words = ['yes', 'hello', 'how', 'are', 'you']
-      console.log(this.editor)
-
-      let bag = this.editor.toLowerCase().split(/([\s|\n])/)
-      for (let word in bag) {
-        if (test_words.includes(bag[word]))
-        {
-          bag[word] = this.createLink(bag[word])
-          console.log('got '+bag[word])
-        }
-      }
-      console.log(bag)
-      this.maze = bag.join('')
-
-
+      this.highlight()
     },
 
     createLink (word) {
@@ -89,7 +74,18 @@ export default {
     },
 
     highlight() {
-      function getIndicesOf(searchStr, str, caseSensitive) {
+      let content = document.querySelector('#editor').value
+      let output = document.querySelector('#maze')
+
+      output.innerHTML = ''
+
+      if (content == '') {
+        return
+      }
+      var t0 = performance.now()
+
+      let 
+        function getIndicesOf(searchStr, str, caseSensitive) {
           var searchStrLen = searchStr.length
           if (searchStrLen == 0) {
               return []
@@ -102,32 +98,16 @@ export default {
           while ((index = str.indexOf(searchStr, startIndex)) > -1) {
               /*
                 search conditions:
-                 - both boundaries are 32
-                 - end is a LF
-                 - end is a CR
-                 - end is end of input
-                 - start is char 0
-                 - start is a LF
-                 - start is a CR
-                 - start is a LF, end is 32
+                 - start is a CR/LF/Space/Start
+                 - end is a CR/LF/Space/EOF
               */
+              let left  = str.charCodeAt(index-1)
+              let right = str.charCodeAt(index+searchStr.length)
+
               if (
-                   (index == 0 && str.charCodeAt(index+searchStr.length) === 32)
-                || (index == 0 && index+searchStr.length == str.length)
-                || (str.charCodeAt(index-1) === 32 && str.charCodeAt(index+searchStr.length) === 32)
-                || (str.charCodeAt(index-1) === 32 && index+searchStr.length == str.length)
-                || (str.charCodeAt(index-1) === 32 && str.charCodeAt(index+searchStr.length) === 10)
-                || (str.charCodeAt(index-1) === 32 && str.charCodeAt(index+searchStr.length) === 13)
-                || (str.charCodeAt(index-1) === 10 && str.charCodeAt(index-1) === 32)
-                || (str.charCodeAt(index-1) === 13 && str.charCodeAt(index-1) === 32)
-                || (str.charCodeAt(index-1) === 10 && index+searchStr.length == str.length)
-                || (str.charCodeAt(index-1) === 13 && index+searchStr.length == str.length)
-                || (str.charCodeAt(index-1) === 10 && str.charCodeAt(index+searchStr.length) === 32)
-                || (str.charCodeAt(index-1) === 13 && str.charCodeAt(index+searchStr.length) === 32)
-                || (str.charCodeAt(index-1) === 13 && str.charCodeAt(index+searchStr.length) === 13)
-                || (str.charCodeAt(index-1) === 10 && str.charCodeAt(index+searchStr.length) === 10)
-                || (str.charCodeAt(index-1) === 13 && str.charCodeAt(index+searchStr.length) === 10)
-                || (str.charCodeAt(index-1) === 10 && str.charCodeAt(index+searchStr.length) === 13)
+                   (index === 0 && (right === 32 || right === 10 || right === 13 || index+searchStr.length === str.length))
+                || ((left === 10 || left === 13 || left === 32) && (right === 32 || right === 10 || right === 13))
+                || ((left === 10 || left === 13 || left === 32) && index+searchStr.length === str.length)
                 )
               {
                 indices.push(index)
@@ -137,33 +117,25 @@ export default {
           return indices
       }
 
-      let content = document.querySelector('#editor').value
-      let output = document.querySelector('#maze')
-
-      let test = []
-
-      if (content == '') {
-        return []
-      }
-
-      var t0 = performance.now()
-
       var offsets = []
       for (let word of this.db) {
-        let calc = getIndicesOf(word, content, false)
-        if (calc.length > 0) {
-          for (let offset of calc) {
-            offsets.push([offset, word])
-          }
-        }
+        // let calc = getIndicesOf(word, content, false)
+        // if (calc.length > 0)
+        // {
+        //   for (let offset of calc)
+        //   {
+        //     offsets.push([offset, word])
+        //   }
+        // }
       }
       
-      function createLink(data, pair) {
+      console.log(JSON.stringify(offsets))
+
+      function createLink(data, pair, scanned) {
         let a = document.createElement("a")
         var linkText = document.createTextNode(data);
         a.appendChild(linkText)
-        a.href = '#none'
-        a.title = data
+        a.href = '#/' + scanned
         output.appendChild(a)
       }
 
@@ -176,39 +148,23 @@ export default {
       let first_chunk = content.substring(0, offsets[0][0])
       output.appendChild(document.createTextNode(first_chunk))
 
-      // split the nodes up first
       for (let pair in offsets) {
-        let word_start      = offsets[pair][0]
-        let word_length     = offsets[pair][0] + offsets[pair][1].length
-        let next_pair_start = offsets[parseInt(pair) + 1] ? offsets[parseInt(pair) + 1][0] : -1
+        let word_start  = offsets[pair][0]
+        let word_length = offsets[pair][0] + offsets[pair][1].length
+        let next_pair   = offsets[parseInt(pair) + 1] ? offsets[parseInt(pair) + 1][0] : -1
+        let rem
 
-        if (pair == 0) {
-          let data = content.substring(word_start, word_length)
-          createLink(data, pair)
+        let data = content.substring(word_start, word_length)
+        createLink(data, pair, offsets[pair][1])
 
-          if (next_pair_start !== -1) {
-            let rem = content.substring(word_length, next_pair_start)
-            output.appendChild(document.createTextNode(rem))
-          }
-          else {
-            let rem = content.substring(word_length)
-            output.appendChild(document.createTextNode(rem))
-          }
+        if (next_pair !== -1) {
+          rem = content.substring(word_length, next_pair)
         }
         else {
-          let data = content.substring(word_start, word_length)
-          createLink(data, pair)
-
-          if (next_pair_start !== -1) {
-            let rem = content.substring(word_length, next_pair_start)
-            output.appendChild(document.createTextNode(rem))
-          }
-          else {
-            let rem = content.substring(word_length)
-            output.appendChild(document.createTextNode(rem))
-          }
+          rem = content.substring(word_length)
         }
 
+        output.appendChild(document.createTextNode(rem))
       }
 
       var t1 = performance.now()

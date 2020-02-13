@@ -2,8 +2,16 @@
   <div id="app">
   
   <b-container fluid>
+    <b-toast id="toast-saved" variant="success" auto-hide-delay="0" no-fade solid no-close-button>
+      Saved
+    </b-toast>
+
     <b-row>
-      <h4 contenteditable="true">{{ pageName }}</h4>
+      <h4 contenteditable="true">{{ currentPage }}</h4>
+
+      <b-col cols="2">
+        <b-form-input cols="2" v-model="newPage" @enter="saveNewPage"></b-form-input>
+      </b-col>
     </b-row>
     <b-row>
       <ul>
@@ -30,40 +38,68 @@
 <script>
 /* eslint-disable */
 
-document.addEventListener("keydown", function(e) {
-  if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
-    e.preventDefault()
-    console.log('save function goes here')
-  }
-}, false)
+import axios from 'axios'
+
+var ADDRESS = 'http://localhost:8888'
 
 /*
   so it looks like contenteditable will treat innerHTML as we expect
   so we can use class-scoped links as boundaries for the text searching?
 */
 
-import ResizableTextarea from '@/components/ResizableTextarea.js'
-
 export default {
   name: 'app',
   components: {
-    ResizableTextarea,
   },
   data: function() {
     return {
-      pageName: 'index',
+      currentPage: 'index',
+      newPage: '',
       editor: 'Yes hello this is some test content',
       oldLength: '',
       maze: '',
       breadcrumb: ['index'],
-      db: ['yes', 'hello', 'how', 'are', 'you']
+      pages: [],
     }
+  },
+  created: function(test) {
+    window.addEventListener("keydown", (e) => {
+      if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
+        e.preventDefault()
+        const formData = new FormData();
+        formData.append('page', 'Hello World!')
+            axios.post(ADDRESS + '/save', formData, { headers: {'Content-Type': 'multipart/form-data' },
+        })
+        .then((response) => {
+          console.log(response)
+          this.$bvToast.show('toast-saved')
+        })
+        .catch((response) => {
+          console.log(response)
+        })
+      }
+    }, false)
   },
   mounted: function() {
     // document.querySelector('#editor').focus()
+    this.updateList()
     this.highlight()
   },
   methods: {
+    updateList() {
+      axios.get(ADDRESS + '/list')
+      .then ((response) => {
+        console.log(response)
+          this.pages = response.data
+      })
+      .catch((response) => {
+        console.log(response)
+      })
+    },
+    saveNewPage(page) {
+      console.log(page)
+
+    },
     createLinks () {
       this.highlight()
     },
@@ -80,7 +116,7 @@ export default {
       let  t0 = performance.now()
       let offsets = []
 
-      for (let word of this.db) {
+      for (let word of this.pages) {
         let startIndex = 0, index
         const len = word.length
         const search = word.toLowerCase()

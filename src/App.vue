@@ -14,18 +14,18 @@
       </b-col>
     </b-row>
     <b-row>
-      <ul>
-        <li v-for="(crumb, index) in breadcrumb" :key="index">
-          {{ crumb }}
+      <b-col cols="2">
+        <ul>
+        <li v-for="(crumb, index) in pages" :key="index">
+          <a href="#/crumb" v-on:click="loadPage(crumb)">{{ crumb }}</a>
         </li>
-      </ul>
-    </b-row>
-    <b-row>
-      <b-col @input="createLinks" class="m-2 border border-primary">
+        </ul>
+      </b-col>
+      <b-col cols="5" @input="createLinks">
         <textarea id="editor" v-model="editor" class="vh-80 w-100">
         </textarea>
       </b-col>
-      <b-col class="m-2 border border-success">
+      <b-col cols="5">
         <div id="maze" class="vh-80" v-html="maze">
         </div>
       </b-col>
@@ -55,7 +55,7 @@ export default {
     return {
       currentPage: 'index',
       newPage: '',
-      editor: 'Yes hello this is some test content',
+      editor: '',
       oldLength: '',
       maze: '',
       breadcrumb: ['index'],
@@ -83,14 +83,23 @@ export default {
   mounted: function() {
     // document.querySelector('#editor').focus()
     this.updateList()
-    this.highlight()
+    this.loadPage('index')
   },
   methods: {
     updateList() {
       axios.get(ADDRESS + '/list')
       .then ((response) => {
+        this.pages = response.data
+      })
+      .catch((response) => {
         console.log(response)
-          this.pages = response.data
+      })
+    },
+    loadPage(page) {
+      axios.get(ADDRESS + '/load', { params: { 'page': page }})
+      .then ((response) => {
+        this.editor = response.data
+        this.$nextTick(() => { this.highlight() })
       })
       .catch((response) => {
         console.log(response)
@@ -105,7 +114,7 @@ export default {
     },
 
     highlight() {
-      const content = document.querySelector('#editor').value
+      const content = editor.value
       const output = document.querySelector('#maze')
 
       output.innerHTML = ''
@@ -154,6 +163,7 @@ export default {
         const a = document.createElement("a")
         a.appendChild(document.createTextNode(content.substring(word_start, word_length)))
         a.href = '#/' + offsets[pair][1]
+        a.onclick = () => { this.loadPage(offsets[pair][1]) }
         output.appendChild(a)
 
         if (next_pair !== -1) {
@@ -196,7 +206,7 @@ textarea {
 }
 
 #maze {
-  white-space: pre;
+  white-space: pre-wrap;
 }
 
 </style>

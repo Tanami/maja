@@ -6,27 +6,27 @@
       Saved
     </b-toast>
 
-    <b-row>
+    <b-row class="vh-10">
       <h4 contenteditable="true">{{ currentPage }}</h4>
 
       <b-col cols="2">
-        <b-form-input cols="2" v-model="newPage" @enter="saveNewPage"></b-form-input>
+        <b-form-input placeholder="create page" cols="2" v-model="newPage" @enter="saveNewPage"></b-form-input>
       </b-col>
     </b-row>
     <b-row>
-      <b-col cols="2">
+      <b-col class="vh-90 w-100 overflow-scroll p-0" cols="2">
         <ul>
         <li v-for="(crumb, index) in pages" :key="index">
           <a href="#/crumb" v-on:click="loadPage(crumb)">{{ crumb }}</a>
         </li>
         </ul>
       </b-col>
-      <b-col cols="5" @input="createLinks">
-        <textarea id="editor" v-model="editor" class="vh-80 w-100">
+      <b-col class="p-0" cols="5" @input="createLinks">
+        <textarea id="editor" v-model="editor" class="p-1 vh-90 w-100">
         </textarea>
       </b-col>
-      <b-col cols="5">
-        <div id="maze" class="vh-80" v-html="maze">
+      <b-col class="p-0" cols="5">
+        <div id="maze" class="vh-90 w-100 p-1" v-html="maze">
         </div>
       </b-col>
     </b-row>
@@ -99,6 +99,7 @@ export default {
       axios.get(ADDRESS + '/load', { params: { 'page': page }})
       .then ((response) => {
         this.editor = response.data
+        this.currentPage = page
         this.$nextTick(() => { this.highlight() })
       })
       .catch((response) => {
@@ -135,8 +136,7 @@ export default {
           let left  = str.charCodeAt(index-1)
           let right = str.charCodeAt(index+search.length)
 
-          // this might break in very surprising ways...
-          if   ((index === 0 || left < 33) && (right < 33 || index+search.length === str.length))
+          if ((index === 0 || left < 56) && (right < 56 || index+search.length === str.length))
             offsets.push([index, search])
 
           startIndex = index + len
@@ -193,8 +193,29 @@ export default {
   box-sizing: border-box;
 }
 
+.overflow-scroll {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.vh-10 {
+  height: 10vh;
+}
+
+.vh-20 {
+  height: 20vh;
+}
+
 .vh-80 {
   height: 80vh;
+}
+
+.vh-90 {
+  height: 90vh;
+}
+
+.vh-100 {
+  height: 100vh;
 }
 
 textarea {
@@ -207,6 +228,12 @@ textarea {
 
 #maze {
   white-space: pre-wrap;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
 }
 
 </style>

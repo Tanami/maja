@@ -142,7 +142,7 @@ export default {
         })
       }
       // detect breadcrumb
-      if (this.breadcrumb[0] !== page) {
+      if (!this.breadcrumb.includes(page)) {
         this.breadcrumb.unshift(page)
       }
       if (this.breadcrumb.length > 9) {

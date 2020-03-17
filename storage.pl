@@ -8,9 +8,7 @@ use Data::Dumper::Perltidy;
 use JSON;
 use AnyEvent;
 
-my %stor = qw();
-
-%stor = %{retrieve 'pages.db' or die};
+my %stor = %{retrieve 'pages.db' or die};
 
 my $application = sub {
     my ($env) = @_;
@@ -49,14 +47,36 @@ my $application = sub {
     }
 
     elsif ($req->path eq '/save') {
-        my $page = $req->param('page');
-        warn Dumper \$req->body_parameters;
-        unless (exists $stor{$page}) { $stor{$page} = '' }
+        my %new = %{ $req->body_parameters };
+        for my $key (keys %new) {
+            $stor{$key} = $new{$key};
+        }
+        nstore \%stor, 'pages.db' or die;
         return [
             200,
             [ 'Access-Control-Allow-Origin' => '*', 'Content-Type' => 'text/plain' ],
-            [ $stor{$page} ]
+            [ 'ok' ]
         ]
+    }
+
+    elsif ($req->path eq '/delete') {
+        my $page = $req->param('page');
+        if (defined $stor{$page}) {
+            delete $stor{$page};
+            nstore \%stor, 'pages.db' or die;
+            return [
+                200,
+                [ 'Access-Control-Allow-Origin' => '*', 'Content-Type' => 'text/plain' ],
+                [ 'deleted' ]
+            ]
+        }
+        else {
+            return [
+                200,
+                [ 'Access-Control-Allow-Origin' => '*', 'Content-Type' => 'text/plain' ],
+                [ 'page not found' ]
+            ]
+        }
     }
 
     elsif ($req->path eq '/list') {

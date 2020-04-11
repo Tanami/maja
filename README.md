@@ -14,8 +14,6 @@ npm run serve
 For the Perl database:
 ```
 cpanm AnyEvent Coro::Twiggy Plack::Request Data::Dumper::Perltidy
-```
-```
 perl storage.pl
 ```
 

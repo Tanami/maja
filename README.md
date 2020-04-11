@@ -1,5 +1,7 @@
 # maja
 
+![a screenshot](https://github.com/Tanami/maja/opt/maja.png)
+
 ## Project setup
 ```
 npm install

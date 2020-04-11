@@ -1,6 +1,6 @@
 # maja
 
-![a screenshot](https://github.com/Tanami/maja/opt/maja.png)
+![a screenshot](https://raw.githubusercontent.com/Tanami/maja/master/opt/maja.png)
 
 ## Project setup
 ```

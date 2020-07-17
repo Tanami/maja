@@ -26,7 +26,7 @@
           <b-col class="pt-2 pl-2 m-0">
             <b-button variant="outline-secondary" size="sm" @click="randomPage()">Random</b-button>
             <template v-for="crumb in breadcrumb">
-              ⭪ <a @click="loadPage(crumb)" class="bread-word">{{ crumb }}</a>
+              <a v-bind:key=crumb @click="loadPage(crumb)" class="bread-word">{{ crumb }}</a>
             </template>
           </b-col>
         </b-row>

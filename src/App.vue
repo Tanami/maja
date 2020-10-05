@@ -100,6 +100,35 @@ export default {
         this.openGraph()
       }
 
+      if (e.ctrlKey && e.keyCode == 65) {
+        // console.log('skipping to start of line')
+        e.preventDefault()
+        let ding = document.getElementById('editor');
+        let start = ding.selectionStart;
+        let temp = editor.value;
+        // will this break on windows? I don't care!
+        let newstart = temp.lastIndexOf("\n", start - 1)
+        ding.focus()
+        this.$nextTick(function() {
+          ding.selectionStart = newstart + 1
+          ding.selectionEnd = newstart + 1
+        })
+      }
+
+      if (e.ctrlKey && e.keyCode == 69) {
+        // console.log('skipping to end of line')
+        e.preventDefault()
+        let ding = document.getElementById('editor');
+        let start = ding.selectionStart;
+        let temp = editor.value;
+        // will this break on windows? I don't care!
+        let newstart = temp.indexOf("\n", start)
+        ding.focus()
+        this.$nextTick(function() {
+          ding.selectionStart = newstart
+          ding.selectionEnd = newstart
+        })
+      }
       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
         e.preventDefault()
         const formData = new FormData();
@@ -175,17 +204,20 @@ export default {
       }
     },
     drawGraph(ctx) {
-      var width = document.getElementById('graph').offsetWidth;
-      var height = document.getElementById('graph').offsetHeight;
+      var width = window.innerWidth;
+      var height = window.innerHeight;
       console.log(width,height)
       var svg = d3.select("#graph").append("svg")
           .attr("width", width)
           .attr("height", height);
       
       var force = d3.layout.force()
-          .gravity(0.05)
-          .distance(200)
-          .charge(-200)
+          .friction(0.1)
+          .gravity(0.01)
+          .distance(150)
+          .charge(-250)
+          .linkDistance(150)
+          .linkStrength(0.1) // remove this for the cooler transition
           .size([width, height]);
       
       d3.json("http://localhost:8888/graph", (error, json) => {
@@ -213,7 +245,7 @@ export default {
 
           node.append("a")
           .attr({"xlink:href": "#"})
-            .attr("dx", 12)
+            .attr("dx", 0)
             .attr("dy", ".35em")
             .text(function(d) { return d.name })
             .on("mousedown", (d,i) => { 
@@ -227,7 +259,10 @@ export default {
             .attr("dx", 12)
             .attr("dy", ".35em")
             .text(function(d) { return d.name });
-      
+
+        resize();
+        d3.select(window).on("resize", resize);
+
         force.on("tick", function() {
           link.attr("x1", function(d) { return d.source.x; })
               .attr("y1", function(d) { return d.source.y; })
@@ -236,6 +271,12 @@ export default {
       
           node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
         });
+
+        function resize() {
+          width = window.innerWidth, height = window.innerHeight;
+          svg.attr("width", width).attr("height", height);
+          force.size([width, height]).resume();
+        }
       });
     },
     insertDate(ctx) {

@@ -20,6 +20,14 @@ perl storage.pl
 ## What exactly is this?
 It is my personal note-taking tool which I devised after years of messing around with other stuff like TreeSheets, yEd, TiddlyWiki, Nototo, GraphViz, etc. I came to the realisation that having plaintext files is essential, and that navigating between them had to be instantaneous. Coincidentally, if you pin your thoughts to keywords this tool will create an accurate mind-mapping via collocations. You can achieve the exact same functionality as this tool with the Acme editor, but that is not usable on a mobile phone or web browser.
 
+## Keyboard Shortcuts
+- <kbd>Alt-Shift-g</kbd>  toggle graph view
+- <kbd>Alt-Shift-d</kbd>  insert current date
+- <kbd>Ctrl+a</kbd>  jump to start of line
+- <kbd>Ctrl+e</kbd>  jump to end of line
+- <kbd>Tab</kbd>  insert 4 spaces :}
+
+
 ## The code looks buggy/unsafe! is it?
 It was written to run on my laptop. If you want to run it in a public environment I suggest modifying it.
 

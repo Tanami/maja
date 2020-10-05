@@ -72,8 +72,8 @@ my $application = sub {
             for (0 ..$#items) {
                 next if $items[$_] eq "\n";
                 next if $items[$_] eq " ";
-                next unless $items[$_] =~ /\w/;
-                my($word) = $items[$_] =~ /(\w+)/;
+                next unless $items[$_] =~ /\w/i;
+                my($word) = $items[$_] =~ /(\w+)/i;
                 if (defined $stor{$word})
                 {
                     push @links => [$file, $word];

@@ -13,7 +13,7 @@ npm run serve
 
 For the Perl database:
 ```
-cpanm AnyEvent Coro::Twiggy Plack::Request Data::Dumper::Perltidy
+cpanm AnyEvent Coro::Twiggy Plack::Request Data::Dumper::Perltidy Graph Graph::D3
 perl storage.pl
 ```
 

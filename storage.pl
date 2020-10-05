@@ -7,6 +7,8 @@ use Plack::Request;
 use Data::Dumper::Perltidy;
 use JSON;
 use AnyEvent;
+use Graph;
+use Graph::D3;
 
 my %stor = %{retrieve 'pages.db' or die};
 
@@ -49,6 +51,8 @@ my $application = sub {
     elsif ($req->path eq '/save') {
         my %new = %{ $req->body_parameters };
         for my $key (keys %new) {
+            # trying to catch a bug
+            die if $key eq '';
             $stor{$key} = $new{$key};
         }
         nstore \%stor, 'pages.db' or die;
@@ -59,6 +63,34 @@ my $application = sub {
         ]
     }
 
+    elsif ($req->path eq '/graph') {
+        my @files = keys %stor;
+        my @links;
+        for my $file (keys %stor) {
+            my @items = split /( |(?=\n))/ => $stor{$file};
+            warn @items;
+            for (0 ..$#items) {
+                next if $items[$_] eq "\n";
+                next if $items[$_] eq " ";
+                next unless $items[$_] =~ /\w/;
+                my($word) = $items[$_] =~ /(\w+)/;
+                if (defined $stor{$word})
+                {
+                    push @links => [$file, $word];
+                }
+            }
+        }
+        my $g = new Graph(
+            vertices => \@files,
+            edges => \@links 
+        );
+        my $d3 = new Graph::D3(graph => $g, type => 'json'); 
+        return [
+            200,
+            [ 'Access-Control-Allow-Origin' => '*', 'Content-Type' => 'application/json' ],
+            [ $d3->force_directed_graph() ]
+        ]
+    }
     elsif ($req->path eq '/delete') {
         my $page = $req->param('page');
         if (defined $stor{$page}) {
@@ -88,6 +120,8 @@ my $application = sub {
             [ encode_json([keys %stor]) ]
         ]
     }
+
+    
 
     return [
         200,

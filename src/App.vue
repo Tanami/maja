@@ -1,7 +1,10 @@
 <template>
   <div id="app">
-  
-  <b-container fluid>
+  <b-container p-0 m-0 fluid v-if="this.graphOpen">
+    <b-row id="graph">
+    </b-row>
+  </b-container>
+  <b-container fluid v-else>
     <b-toast id="toast-saved" variant="success" auto-hide-delay="0" no-fade solid no-close-button>
       Saved
     </b-toast>
@@ -26,7 +29,7 @@
           <b-col class="pt-2 pl-2 m-0">
             <b-button variant="outline-secondary" size="sm" @click="randomPage()">Random</b-button>
             <template v-for="crumb in breadcrumb">
-              ⭪ <a @click="loadPage(crumb)" class="bread-word">{{ crumb }}</a>
+              ⭪ <a :key="crumb" @click="loadPage(crumb)" class="bread-word">{{ crumb }}</a>
             </template>
           </b-col>
         </b-row>
@@ -37,7 +40,7 @@
           </b-col>
           <b-col class="p-2 vh-95" cols="6" @input="createLinks">
             <div id="editor-wrapper">
-              <textarea id="editor" v-model="editor" class="p-1 w-100">
+              <textarea id="editor" v-model="editor" class="p-1 w-100" @keydown.exact.tab="insertSpaces" @keydown.exact.alt.shift.d="insertDate">
               </textarea>
             </div>
           </b-col>
@@ -53,6 +56,7 @@
 
 import axios from 'axios'
 import _ from 'lodash'
+import * as d3 from 'd3'
 
 var ADDRESS = 'http://localhost:8888'
 
@@ -75,10 +79,27 @@ export default {
       maze: '',
       breadcrumb: [],
       pages: [],
+      graphOpen: false,
     }
   },
   created: function(test) {
+    window.onbeforeunload = function (e) {
+        e = e || window.event;
+
+        // For IE and Firefox prior to version 4
+        if (e) {
+            e.returnValue = 'Sure?';
+        }
+
+        // For Safari
+        return 'Sure?';
+    };
+
     window.addEventListener("keydown", (e) => {
+      if (e.altKey && e.shiftKey && e.keyCode == 71) {
+        this.openGraph()
+      }
+
       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
         e.preventDefault()
         const formData = new FormData();
@@ -99,9 +120,42 @@ export default {
     }, false)
   },
   mounted: function() {
-    // document.querySelector('#editor').focus()
-    this.updateList()
-    this.loadPage('index')
+    console.log('mounted')
+    document.querySelector('#editor').focus()
+    this.updateList(
+      () => {
+        let test = window.location.hash;
+        if (test !== '') {
+          let page = test.substring(2);
+          if (page !== '' && this.pages.indexOf(page) !== -1) {
+            this.loadPage(page)
+          }
+          else {
+            this.loadPage('index')
+          }
+        }
+        else {
+          this.loadPage('index')
+        }
+    })
+
+    window.onhashchange = (e) => {
+      console.log('EVENT',window.location.hash)
+        let test = window.location.hash;
+        if (test !== '') {
+          let page = test.substring(2);
+          if (page !== '' && this.pages.indexOf(page) !== -1) {
+            this.loadPage(page)
+          }
+          else {
+            this.loadPage('index')
+          }
+        }
+        else {
+          this.loadPage('index')
+        }
+    };
+
   },
   watch: {
     editor: _.debounce(function() {
@@ -109,10 +163,114 @@ export default {
     }, 250)
   },
   methods: {
-    updateList() {
+    openGraph(ctx) {
+      console.log('openGraph')
+      if (this.graphOpen === false) {
+        this.graphOpen = true
+        this.$nextTick(() => this.drawGraph())
+      }
+      else {
+        document.getElementById('graph').innerHTML = '';
+        this.$nextTick(() => (this.graphOpen = false))
+      }
+    },
+    drawGraph(ctx) {
+      var width = document.getElementById('graph').offsetWidth;
+      var height = document.getElementById('graph').offsetHeight;
+      console.log(width,height)
+      var svg = d3.select("#graph").append("svg")
+          .attr("width", width)
+          .attr("height", height);
+      
+      var force = d3.layout.force()
+          .gravity(0.05)
+          .distance(200)
+          .charge(-200)
+          .size([width, height]);
+      
+      d3.json("http://localhost:8888/graph", (error, json) => {
+        if (error) throw error;
+      
+        force
+            .nodes(json.nodes)
+            .links(json.links)
+            .start();
+      
+        var link = svg.selectAll(".link")
+            .data(json.links)
+          .enter().append("line")
+            .attr("class", "link");
+      
+        var node = svg.selectAll(".node")
+            .data(json.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(force.drag);
+      
+          node.append("circle")
+          .attr("class", "node")
+          .attr("r", 5);
+
+          node.append("a")
+          .attr({"xlink:href": "#"})
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name })
+            .on("mousedown", (d,i) => { 
+              document.getElementById('graph').innerHTML = '';
+              this.$nextTick(() => {
+                this.graphOpen = false
+                this.loadPage(d.name)
+              })
+            })
+            .append("text")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name });
+      
+        force.on("tick", function() {
+          link.attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; });
+      
+          node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        });
+      });
+    },
+    insertDate(ctx) {
+      // this is so hacky hahaha
+      ctx.preventDefault();
+      let ding = document.getElementById('editor');
+      let start = ding.selectionStart;
+      let temp = editor.value;
+      let date = new Date
+      let datestring = date.getDate()+'/'+date.getMonth()+'/'+(parseInt(date.getYear())+parseInt(1900))
+      let neweditor = temp.substring(0, start) + datestring + temp.substring(start)
+      this.editor = neweditor
+      ding.focus()
+      this.$nextTick(function() {
+        ding.selectionEnd = start + datestring.length
+      })
+    },
+    insertSpaces(ctx) {
+      // this is so hacky hahaha
+      ctx.preventDefault();
+      let ding = document.getElementById('editor');
+      let start = ding.selectionStart;
+      let temp = editor.value;
+      let neweditor = temp.substring(0, start) + '    ' + temp.substring(start)
+      this.editor = neweditor
+      ding.focus()
+      this.$nextTick(function() {
+        ding.selectionEnd = start + 4
+      })
+    },
+    updateList(cb) {
       axios.get(ADDRESS + '/list')
       .then ((response) => {
         this.pages = response.data.sort((a,b)=>(a.localeCompare(b)))
+        cb.apply()
       })
       .catch((response) => {
         console.log(response)
@@ -124,48 +282,77 @@ export default {
     },
 
     loadPage(page) {
-      if (this.cache[page] !== undefined) {
-        this.currentPage = page
-        this.editor = this.cache[page]
-        this.$nextTick(() => { this.highlight() })
-      }
-      else {
-        axios.get(ADDRESS + '/load', { params: { 'page': page }})
-        .then ((response) => {
-          this.cache[page] = response.data
+      console.log('loadPage',page)
+      if (this.pages.indexOf(page)) {
+        if (this.cache[page] !== undefined) {
           this.currentPage = page
           this.editor = this.cache[page]
           this.$nextTick(() => { this.highlight() })
-        })
-        .catch((response) => {
-          console.log(response)
-        })
+        }
+        else {
+          console.log('loading page..')
+          axios.get(ADDRESS + '/load', { params: { 'page': page }})
+          .then ((response) => {
+            console.log('setting page')
+            this.cache[page] = response.data
+            this.currentPage = page
+            this.editor = this.cache[page]
+            console.log('starting hilight..')
+            this.$nextTick(() => { this.highlight(); console.log('finished highlight') })
+          })
+          .catch((response) => {
+            console.log(response)
+          })
+        }
+        console.log('finished')
+        // detect breadcrumb
+        if (!this.breadcrumb.includes(page)) {
+          this.breadcrumb.unshift(page)
+        }
+        if (this.breadcrumb.length > 9) {
+          this.breadcrumb.splice(9)
+        }
+        if(history.pushState) {
+            history.pushState(null, null, '#/'+page);
+        }
+        else {
+          window.location.hash = '#/'+page
+        }
       }
-      // detect breadcrumb
-      if (!this.breadcrumb.includes(page)) {
-        this.breadcrumb.unshift(page)
-      }
-      if (this.breadcrumb.length > 9) {
-        this.breadcrumb.splice(9)
+      else {
+        console.log(page,'not found?')
       }
     },
     saveNewPage() {
       if (this.newPage !== '')
       {
-        console.log(this.newPage)
-        this.pages.unshift(this.newPage)
+        let page = this.newPage
+        console.log(page)
+        this.pages.unshift(page)
         this.pages = this.pages.sort((a,b)=>(a.localeCompare(b)))
-        this.cache[this.newPage] = ''
-        this.currentPage = this.newPage
-        this.editor = this.cache[this.newPage]
+        this.cache[page] = ''
+        this.currentPage = page
+        this.editor = this.cache[page]
         this.newPage = ''
+        if(history.pushState) {
+            history.pushState(null, null, '#/'+page);
+        }
+        else {
+          window.location.hash = '#/'+page
+        }
+        if (!this.breadcrumb.includes(page)) {
+          this.breadcrumb.unshift(page)
+        }
+        if (this.breadcrumb.length > 9) {
+          this.breadcrumb.splice(9)
+        }
+        document.querySelector('#editor').focus()
       }
-
     },
     createLinks: _.debounce(function() { this.highlight() }, 250),
 
     highlight() {
-      const content = editor.value
+      const content = this.editor
       const output = document.querySelector('#maze')
 
       output.innerHTML = ''
@@ -200,6 +387,9 @@ export default {
 
       // console.log(JSON.stringify(offsets))
 
+      // can.. *probably* get rid of this..
+      this.$nextTick(() => {
+
       offsets = offsets.sort((a, b) => ((parseInt(a[0]) > parseInt(b[0])) ? 1 : -1))
       output.appendChild(document.createTextNode(content.substring(0, offsets[0][0])))
 
@@ -228,8 +418,11 @@ export default {
         output.appendChild(document.createTextNode(rem))
       }
 
+      });
+
       let t1 = performance.now()
-      // console.log("took " + (t1 - t0) + " milliseconds.")
+      console.log("took " + (t1 - t0) + " milliseconds.")
+
     },
   },
 }
@@ -312,6 +505,33 @@ textarea {
 
 #editor-wrapper {
   height: 100%;
+}
+
+#graph {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  box-sizing: border-box;
+  /* background: black; */
+  /* color: white; */
+}
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  font-size: 10pt;
+}
+
+.link {
+  fill: none;
+  stroke: #bbb;
+}
+
+#graph svg {
+  width: inherit;
+  height: inherit;
+  box-sizing: border-box;
+  background: black;
 }
 
 #maze {

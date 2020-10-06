@@ -16,7 +16,7 @@
     <b-row>
       <b-col id="sidebar" class="vh-100 w-100 overflow-scroll p-0" cols="2">
         <b-col cols="12">
-          <b-form-input class="mt-1" placeholder="create page" cols="2" v-model="newPage" v-on:keyup.enter="saveNewPage"></b-form-input>
+          <b-form-input class="mt-1" placeholder="create page" cols="2" v-model="newPage" @keydown.exact.enter="saveNewPage"></b-form-input>
         </b-col>
         <ul class="pl-1">
         <li v-for="(crumb, index) in pages" :key="index">
@@ -40,7 +40,15 @@
           </b-col>
           <b-col class="p-2 vh-95" cols="6" @input="createLinks">
             <div id="editor-wrapper">
-              <textarea id="editor" v-model="editor" class="p-1 w-100" @keydown.exact.tab="insertSpaces" @keydown.exact.alt.shift.d="insertDate">
+              <textarea
+                id="editor"
+                v-model="editor"
+                class="p-1 w-100"
+                @keydown.exact.tab="insertSpaces"
+                @keydown.exact.alt.shift.d="insertDate"
+                @keydown.exact.ctrl.a="seekStartLine"
+                @keydown.exact.ctrl.e="seekEndLine"
+                >
               </textarea>
             </div>
           </b-col>
@@ -106,35 +114,6 @@ export default {
         this.openGraph()
       }
 
-      if (e.ctrlKey && e.keyCode == 65) {
-        // console.log('skipping to start of line')
-        e.preventDefault()
-        let ding = document.getElementById('editor');
-        let start = ding.selectionStart;
-        let temp = editor.value;
-        // will this break on windows? I don't care!
-        let newstart = temp.lastIndexOf("\n", start - 1)
-        ding.focus()
-        this.$nextTick(function() {
-          ding.selectionStart = newstart + 1
-          ding.selectionEnd = newstart + 1
-        })
-      }
-
-      if (e.ctrlKey && e.keyCode == 69) {
-        // console.log('skipping to end of line')
-        e.preventDefault()
-        let ding = document.getElementById('editor');
-        let start = ding.selectionStart;
-        let temp = editor.value;
-        // will this break on windows? I don't care!
-        let newstart = temp.indexOf("\n", start)
-        ding.focus()
-        this.$nextTick(function() {
-          ding.selectionStart = newstart
-          ding.selectionEnd = newstart
-        })
-      }
       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
         e.preventDefault()
         this.cache[this.currentPage] = this.editor
@@ -311,6 +290,37 @@ export default {
         }
       });
     },
+        // if (e.ctrlKey && e.keyCode == 65) {
+    seekStartLine(e) {
+      // console.log('skipping to start of line')
+      e.preventDefault()
+      let ding = document.getElementById('editor');
+      let start = ding.selectionStart;
+      let temp = editor.value;
+      // will this break on windows? I don't care!
+      let newstart = temp.lastIndexOf("\n", start - 1)
+      ding.focus()
+      this.$nextTick(function() {
+        ding.selectionStart = newstart + 1
+        ding.selectionEnd = newstart + 1
+      })
+    },
+
+    // if (e.ctrlKey && e.keyCode == 69) {
+    seekEndLine(e) {
+      // console.log('skipping to end of line')
+      e.preventDefault()
+      let ding = document.getElementById('editor');
+      let start = ding.selectionStart;
+      let temp = editor.value;
+      // will this break on windows? I don't care!
+      let newstart = temp.indexOf("\n", start)
+      ding.focus()
+      this.$nextTick(function() {
+        ding.selectionStart = newstart
+        ding.selectionEnd = newstart
+      })
+    },
     insertDate(ctx) {
       // this is so hacky hahaha
       ctx.preventDefault();
@@ -399,27 +409,35 @@ export default {
     saveNewPage() {
       if (this.newPage !== '')
       {
-        let page = this.newPage
-        console.log(page)
-        this.pages.unshift(page)
-        this.pages = this.pages.sort((a,b)=>(a.localeCompare(b)))
-        this.cache[page] = ''
-        this.currentPage = page
-        this.editor = this.cache[page]
-        this.newPage = ''
-        if(history.pushState) {
-            history.pushState(null, null, '#/'+page);
+        let mightExist = this.pages.findIndex(page => page.toLowerCase() === this.newPage.toLowerCase())
+        if (mightExist !== -1) {
+          this.loadPage(this.pages[mightExist])
+          this.newPage = ''
+          this.$nextTick(() => document.querySelector('#editor').focus())
         }
         else {
-          window.location.hash = '#/'+page
+          let page = this.newPage
+          console.log(page)
+          this.pages.unshift(page)
+          this.pages = this.pages.sort((a,b)=>(a.localeCompare(b)))
+          this.cache[page] = ''
+          this.currentPage = page
+          this.editor = this.cache[page]
+          this.newPage = ''
+          if(history.pushState) {
+              history.pushState(null, null, '#/'+page);
+          }
+          else {
+            window.location.hash = '#/'+page
+          }
+          if (!this.breadcrumb.includes(page)) {
+            this.breadcrumb.unshift(page)
+          }
+          if (this.breadcrumb.length > 9) {
+            this.breadcrumb.splice(9)
+          }
+          document.querySelector('#editor').focus()
         }
-        if (!this.breadcrumb.includes(page)) {
-          this.breadcrumb.unshift(page)
-        }
-        if (this.breadcrumb.length > 9) {
-          this.breadcrumb.splice(9)
-        }
-        document.querySelector('#editor').focus()
       }
     },
     createLinks: _.debounce(function() { this.highlight() }, 250),
@@ -478,7 +496,6 @@ export default {
 
         const a = document.createElement("a")
         a.appendChild(document.createTextNode(content.substring(word_start, word_length)))
-        console.log(offsets[pair][1])
         a.href = '#/' + offsets[pair][1]
         // a.href = '#none'
 

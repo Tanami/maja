@@ -119,8 +119,6 @@ my $application = sub {
     }
 
     elsif ($req->path eq '/list') {
-        keys %stor;
-
         return [
             200,
             [ 'Access-Control-Allow-Origin' => '*', 'Content-Type' => 'application/json' ],

@@ -16,7 +16,7 @@
     <b-row>
       <b-col id="sidebar" class="vh-100 w-100 overflow-scroll p-0" cols="2">
         <b-col cols="12">
-          <b-form-input class="mt-1" placeholder="create page" cols="2" v-model="newPage" @keydown.exact.enter="saveNewPage"></b-form-input>
+          <b-form-input class="mt-1" placeholder="create page" cols="2" v-model="newPage" @keyup.exact.enter="saveNewPage"></b-form-input>
         </b-col>
         <ul class="pl-1">
         <li v-for="(crumb, index) in pages" :key="index">
@@ -48,8 +48,7 @@
                 @keydown.exact.alt.shift.d="insertDate"
                 @keydown.exact.ctrl.a="seekStartLine"
                 @keydown.exact.ctrl.e="seekEndLine"
-                >
-              </textarea>
+                ></textarea>
             </div>
           </b-col>
         </b-row>
@@ -137,6 +136,9 @@ export default {
   mounted: function() {
     console.log('mounted')
     document.querySelector('#editor').focus()
+    document.getElementById('editor').addEventListener('scroll', () => {
+      document.getElementById('maze').scrollTop = document.getElementById('editor').scrollTop
+    })
     this.updateList(
       () => {
         let test = window.location.hash;
@@ -189,6 +191,9 @@ export default {
         this.$nextTick(() => {
           this.graphOpen = false
           this.$nextTick(() => {
+            document.getElementById('editor').addEventListener('scroll', () => {
+              document.getElementById('maze').scrollTop = document.getElementById('editor').scrollTop
+            })
             this.highlight()
           })
         })
@@ -457,7 +462,11 @@ export default {
       let  t0 = performance.now()
       let offsets = []
 
+      // let test = (this.pages.filter(p => p.indexOf(' ') !== -1)).concat(this.pages.filter(p => p.indexOf(' ') === -1))
+      // console.log(test)
+
       for (let word of this.pages) {
+      // for (let word of test) {
         let startIndex = 0, index
         const len = word.length
         const search = word.toLowerCase()

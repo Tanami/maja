@@ -1,6 +1,7 @@
 # maja
 
 ![a screenshot](https://raw.githubusercontent.com/Tanami/maja/master/opt/maja.png)
+![another screenshot](https://raw.githubusercontent.com/Tanami/maja/master/opt/graph.png)
 
 ## How to run it
 

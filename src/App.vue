@@ -137,6 +137,7 @@ export default {
       }
       if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)  && e.keyCode == 83) {
         e.preventDefault()
+        this.cache[this.currentPage] = this.editor
         const formData = new FormData();
         // console.log(this.cache)
         for (let page in this.cache) {
@@ -215,6 +216,7 @@ export default {
       }
     },
     drawGraph(ctx) {
+      let current_word = this.currentPage
       var width = window.innerWidth;
       var height = window.innerHeight;
       console.log(width,height)
@@ -243,7 +245,7 @@ export default {
             .data(json.links)
           .enter().append("line")
             .attr('stroke-width', (d) => {
-              return 0.25 * json.links.filter((e) => (e.source.index == d.source.index)).length
+              return 0.1 * json.links.filter((e) => (e.source.index == d.source.index)).length
             })
             .attr("class", "link");
 
@@ -281,6 +283,11 @@ export default {
               })
             })
             .append("text")
+            .attr("font-size", (d) => {
+              if (current_word == d.name)
+              { return 36 }
+              else { return 12 }
+            })
             .attr("dx", 12)
             .attr("dy", ".35em")
             .text(function(d) { return d.name });
@@ -443,7 +450,7 @@ export default {
           let right = str.charCodeAt(index+search.length)
 
           if ((index === 0 || left < 64) && (right < 64 || index+search.length === str.length))
-            offsets.push([index, search])
+            offsets.push([index, word])
 
           startIndex = index + len
         }
@@ -471,11 +478,14 @@ export default {
 
         const a = document.createElement("a")
         a.appendChild(document.createTextNode(content.substring(word_start, word_length)))
-        // a.href = '#/' + offsets[pair][1]
+        console.log(offsets[pair][1])
+        a.href = '#/' + offsets[pair][1]
         // a.href = '#none'
+
         a.classList.add('word')
         a.onclick = () => { this.loadPage(offsets[pair][1]) }
         output.appendChild(a)
+
 
         if (next_pair !== -1) {
           rem = content.substring(word_length, next_pair)

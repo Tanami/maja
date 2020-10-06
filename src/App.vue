@@ -356,7 +356,7 @@ export default {
 
     loadPage(page) {
       console.log('loadPage',page)
-      if (this.pages.indexOf(page)) {
+      if (this.pages.indexOf(page) !== -1) {
         if (this.cache[page] !== undefined) {
           this.currentPage = page
           this.editor = this.cache[page]

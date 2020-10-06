@@ -10,6 +10,10 @@ use AnyEvent;
 use Graph;
 use Graph::D3;
 
+if (!-e 'pages.db') {
+    nstore { 'index' => 'this is the index' }, 'pages.db';
+}
+
 my %stor = %{retrieve 'pages.db' or die};
 
 my $application = sub {
@@ -68,15 +72,18 @@ my $application = sub {
         my @links;
         for my $file (keys %stor) {
             my @items = split /( |(?=\n))/ => $stor{$file};
-            warn @items;
             for (0 ..$#items) {
                 next if $items[$_] eq "\n";
                 next if $items[$_] eq " ";
                 next unless $items[$_] =~ /\w/i;
                 my($word) = $items[$_] =~ /(\w+)/i;
+                # it doesn't matter if this is lc since it's only for the edge
                 if (defined $stor{$word})
                 {
                     push @links => [$file, $word];
+                }
+                elsif (defined $stor{lc $word}) {
+                    push @links => [$file, lc $word];
                 }
             }
         }

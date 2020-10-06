@@ -23,6 +23,7 @@ It is my personal note-taking tool which I devised after years of messing around
 ## Keyboard Shortcuts
 - <kbd>Alt-Shift-g</kbd>  toggle graph view
 - <kbd>Alt-Shift-d</kbd>  insert current date
+- <kbd>Alt-Shift-d</kbd>  load random page
 - <kbd>Ctrl+a</kbd>  jump to start of line
 - <kbd>Ctrl+e</kbd>  jump to end of line
 - <kbd>Tab</kbd>  insert 4 spaces :}

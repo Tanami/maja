@@ -96,6 +96,12 @@ export default {
     };
 
     window.addEventListener("keydown", (e) => {
+      // console.log(e.keyCode)
+
+      if (e.altKey && e.shiftKey && e.keyCode == 82) {
+        this.randomPage()
+      }
+
       if (e.altKey && e.shiftKey && e.keyCode == 71) {
         this.openGraph()
       }
@@ -200,7 +206,12 @@ export default {
       }
       else {
         document.getElementById('graph').innerHTML = '';
-        this.$nextTick(() => (this.graphOpen = false))
+        this.$nextTick(() => {
+          this.graphOpen = false
+          this.$nextTick(() => {
+            this.highlight()
+          })
+        })
       }
     },
     drawGraph(ctx) {
@@ -212,12 +223,12 @@ export default {
           .attr("height", height);
       
       var force = d3.layout.force()
-          .friction(0.1)
-          .gravity(0.01)
-          .distance(150)
-          .charge(-250)
-          .linkDistance(150)
-          .linkStrength(0.1) // remove this for the cooler transition
+          .friction(0.01)
+          .gravity(0.001)
+          .distance(200)
+          .charge(-100)
+          .linkDistance(200)
+          .linkStrength(0.05) // remove this for the cooler transition
           .size([width, height]);
       
       d3.json("http://localhost:8888/graph", (error, json) => {
@@ -231,7 +242,17 @@ export default {
         var link = svg.selectAll(".link")
             .data(json.links)
           .enter().append("line")
+            .attr('stroke-width', (d) => {
+              return 0.25 * json.links.filter((e) => (e.source.index == d.source.index)).length
+            })
             .attr("class", "link");
+
+            // console.log(link)
+
+        // var edge_weight = d3.scale.linear()
+        //           .domain([0, 100])
+        //                     .range([0, 100]);
+
       
         var node = svg.selectAll(".node")
             .data(json.nodes)
@@ -241,7 +262,11 @@ export default {
       
           node.append("circle")
           .attr("class", "node")
-          .attr("r", 5);
+          // .attr("r", 5);
+          .attr("r", (d) => {
+              return 5 + 0.5 * json.links.filter((e) => (e.target.index == d.index)).length
+              // return 5 + json.links.filter((e) => (e.source.index == d.index)).length
+          });
 
           node.append("a")
           .attr({"xlink:href": "#"})
@@ -395,6 +420,9 @@ export default {
     highlight() {
       const content = this.editor
       const output = document.querySelector('#maze')
+
+      if (!output)
+        return
 
       output.innerHTML = ''
 

@@ -191,10 +191,10 @@ export default {
         this.$nextTick(() => {
           this.graphOpen = false
           this.$nextTick(() => {
+            this.highlight()
             document.getElementById('editor').addEventListener('scroll', () => {
               document.getElementById('maze').scrollTop = document.getElementById('editor').scrollTop
             })
-            this.highlight()
           })
         })
       }

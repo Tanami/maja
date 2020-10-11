@@ -22,6 +22,7 @@ perl storage.pl
 It is my personal note-taking tool which I devised after years of messing around with other stuff like TreeSheets, yEd, TiddlyWiki, Nototo, GraphViz, etc. I came to the realisation that having plaintext files is essential, and that navigating between them had to be instantaneous. Coincidentally, if you pin your thoughts to keywords this tool will create an accurate mind-mapping via collocations. You can achieve the exact same functionality as this tool with the Acme editor, but that is not usable on a mobile phone or web browser.
 
 ## Keyboard Shortcuts
+- <kbd>Ctrl+s</kbd>  Save All
 - <kbd>Alt-Shift-g</kbd>  toggle graph view
 - <kbd>Alt-Shift-d</kbd>  insert current date
 - <kbd>Alt-Shift-r</kbd>  load random page

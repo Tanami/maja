@@ -40,3 +40,5 @@ Definitely not, the closest things I have found still require you to manually sp
  - https://www.nototo.app
  - https://roamresearch.com
    - probably the closest to my program, but costs money and requires manual linking of words (yuck!)
+ - https://infranodus.com/
+   - also commercial and is not a true collocational map since it attempts to derive significance by node betweenness

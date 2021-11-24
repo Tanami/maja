@@ -36,6 +36,8 @@ It was written to run on my laptop. If you want to run it in a public environmen
 
 ## Hasn't this been done before?
 Definitely not, the closest things I have found still require you to manually specify which sections of text are links, and that is a total waste of time. That said, here is a list of things which people might find similar:
+ - https://www.ummm.co
+   - a new commercial service, has some cool features like public sharing, thought fragments, and mind-maps but requires manual linking of words
  - https://obsidian.md
    - Has a nice graph view, but still requires manual linking.
  - https://www.notion.so

@@ -50,3 +50,7 @@ Definitely not, the closest things I have found still require you to manually sp
    - also commercial and is not a true collocational map since it attempts to derive significance by node betweenness
  - https://connectedtext.com
    - requires manual linking `[[wiki-style]]`, commercial, has many formatting features
+ - https://logseq.com/
+   - TBD
+ - https://foambubble.github.io/foam/
+   - TBD

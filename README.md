@@ -56,3 +56,7 @@ Definitely not, the closest things I have found still require you to manually sp
    - TBD
  - https://tana.inc/
    - TBD
+ - https://standardnotes.com
+   - TBD
+ - https://anytype.io
+   - TBD
